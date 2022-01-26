@@ -1,0 +1,10 @@
+name: poc-dj-stripe
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python 3.9.*
+  - pip
+  - psycopg2
+  - pip:
+    - -r ../requirements/local.txt

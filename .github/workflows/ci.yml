@@ -1,0 +1,50 @@
+name: poc-dj-stripe
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 25432
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: postgres
+
+jobs:
+  main:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash -l {0}
+    concurrency:
+      group: ci-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Create environment variables file
+      run: |
+        envsubst < .env.tpl > .env
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        mamba-version: "*"
+        environment-file: conda/dev.yaml
+        channels: conda-forge,nodefaults
+        activate-environment: poc-dj-stripe
+        use-mamba: true
+        miniforge-variant: Mambaforge
+
+    - name: load docker
+      run: |
+        echo "OK"

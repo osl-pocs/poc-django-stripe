@@ -1,0 +1,12 @@
+USE_DOCKER=yes
+IPYTHONDIR=/app/.ipython
+REDIS_URL=redis://redis:6379/0
+CELERY_BROKER_URL=
+CELERY_FLOWER_USER=debug
+CELERY_FLOWER_PASSWORD=debug
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=poc_django_stripe
+POSTGRES_USER=debug
+POSTGRES_PASSWORD=debug
+DATABASE_URL=postgres://postgres:postgres@localhost:15432/postgres
