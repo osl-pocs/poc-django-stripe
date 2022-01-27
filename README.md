@@ -81,3 +81,34 @@ The following details how to deploy this application.
 ### Docker
 
 See detailed [cookiecutter-django Docker documentation](http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html).
+
+
+### Stripe CLI
+
+```bash
+docker-compose --file docker/docker-compose.yaml run --rm stripe-cli
+```
+
+Inside the docker container, run:
+
+```sh
+stripe login
+```
+
+Open the link in the output and confirm. Now, run the following command in
+order to listening to the webhook:
+
+```sh
+stripe listen --forward-to localhost:8000/payments/webhook/
+```
+
+For more information, check the 
+[official documentation](https://stripe.com/docs/stripe-cli).
+
+
+## Resources
+
+Here there is a list with some nice resources about stripe:
+
+- https://testdriven.io/blog/django-stripe-tutorial
+- https://dj-stripe.readthedocs.io/en/master/

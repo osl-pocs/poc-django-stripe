@@ -12,25 +12,33 @@ services:
     image: poc-dj-stripe
     container_name: poc-dj-stripe
     depends_on:
-      - postgres
+      - dj-stripe-db
       - redis
       - mailhog
     volumes:
       - .:/app:z
     env_file:
-      - ./.env
+      - ../.env
     ports:
       - "8000:8000"
     command: /start
 
-  postgres:
-    image: postgres/postgres
+  dj-stripe-db:
+    image: postgres:13.5
     container_name: poc-dj-stripe-db
     volumes:
       - poc_django_stripe_local_postgres_data:/var/lib/postgresql/data:Z
       - poc_django_stripe_local_postgres_data_backups:/backups:z
     env_file:
       - ../.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p 15432 -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - 15432:15432
+    command: -p 15432
 
   docs:
     image: poc_django_stripe_local_docs
@@ -64,7 +72,7 @@ services:
     container_name: poc_django_stripe_local_celeryworker
     depends_on:
       - redis
-      - postgres
+      - dj-stripe-db
       - mailhog
     ports: []
     command: /start-celeryworker
@@ -75,7 +83,7 @@ services:
     container_name: poc_django_stripe_local_celerybeat
     depends_on:
       - redis
-      - postgres
+      - dj-stripe-db
       - mailhog
     ports: []
     command: /start-celerybeat
@@ -87,3 +95,14 @@ services:
     ports:
       - "5555:5555"
     command: /start-flower
+
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-cli
+    stdin_open: true
+    tty: true
+    env_file:
+      - ../.env
+    network_mode: host
+    entrypoint: /bin/sh
+    command: ""

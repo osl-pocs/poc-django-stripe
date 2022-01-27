@@ -52,6 +52,10 @@
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'about' %}">About</a>
               </li>
+              <!-- note: move it to the authenticated area -->
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'payments' %}">Payments</a>
+              </li>
               {% if request.user.is_authenticated %}
                 <li class="nav-item">
                   {# URL provided by django-allauth/account/urls.py #}
