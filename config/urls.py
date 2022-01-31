@@ -18,8 +18,13 @@ urlpatterns = [
     # User management
     path("users/", include("poc_django_stripe.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    path('payments/', include('poc_django_stripe.payments.urls'))
+    path('payments/', include('poc_django_stripe.payments.urls', namespace="payments"))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# THIRD-PARTY
+urlpatterns += [
+     path("stripe/", include("djstripe.urls", namespace="djstripe")),
+]
 
 if settings.DEBUG:
     # Static file serving when using Gunicorn + Uvicorn for local web socket development

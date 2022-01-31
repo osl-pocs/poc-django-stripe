@@ -6,5 +6,8 @@ dependencies:
   - python 3.9.*
   - pip
   - psycopg2
+  # dev
+  - black
+  - pre-commit
   - pip:
     - -r ../requirements/local.txt

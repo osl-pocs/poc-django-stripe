@@ -35,4 +35,8 @@ if __name__ == "__main__":
     current_path = Path(__file__).parent.resolve()
     sys.path.append(str(current_path / "poc_django_stripe"))
 
+    # Override default port for `runserver` command
+    from django.core.management.commands.runserver import Command as runserver
+    runserver.default_port = "8081"
+
     execute_from_command_line(sys.argv)

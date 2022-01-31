@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}User: {{ object.username }}{% endblock %}
+
+{% block content %}
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{% static 'js/payments.js' %}"></script>
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+
+      <h2>{{ object.username }}</h2>
+      {% if object.name %}
+      <p>{{ object.name }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <h3>Customer Portal</h3>
+
+  <form method="POST" action="{% url 'payments:stripe-customer-portal' %}">
+    <button class="btn btn-primary" type="submit">Stripe Customer Portal</button>
+  </form>
+</div>
+{% endblock content %}
