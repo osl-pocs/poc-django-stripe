@@ -1,9 +1,3 @@
-DOCKER:=docker-compose --file docker/docker-compose.yaml
-
-.PHONY: docker-start-db
-docker-start-db:
-	$(DOCKER) up -d dj-stripe-db
-
 
 .PHONY: migrate
 migrate:
@@ -20,3 +14,7 @@ dev-createsuperuser:
 		--username admin \
 		--email admin@localhost \
 		--noinput
+
+.PHONY: run-tests
+run-tests:
+	pytest 

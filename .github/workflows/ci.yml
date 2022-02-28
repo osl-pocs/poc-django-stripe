@@ -38,6 +38,11 @@ jobs:
         use-mamba: true
         miniforge-variant: Mambaforge
 
-    - name: load docker
-      run: |
-        echo "OK"
+    - name: install deps
+      run: poetry install
+
+    - name: prepare database
+      run: make migrate
+
+    - name: tests
+      run: make run-tests
