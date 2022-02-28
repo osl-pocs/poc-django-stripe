@@ -24,8 +24,12 @@ USE_L10N = True
 USE_TZ = True
 LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 
-DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "db.sqlite"
+    }
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ROOT_URLCONF = "config.urls"
@@ -232,11 +236,10 @@ SPECTACULAR_SETTINGS = {
 }
 
 # STRIPE
-STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY")
-STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_ENDPOINT_SECRET = os.getenv("STRIPE_ENDPOINT_SECRET")
+STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY")
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
+STRIPE_SECRET_KEY = "_whsec"
 STRIPE_LIVE_MODE = False
 DJSTRIPE_WEBHOOK_VALIDATION = "verify_signature"
 DJSTRIPE_USE_NATIVE_JSONFIELD = True
