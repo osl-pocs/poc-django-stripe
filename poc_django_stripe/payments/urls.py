@@ -9,7 +9,7 @@ urlpatterns = [
     path("config/", views.stripe_config),
     path("checkout-success/", views.CheckoutSuccessPageView.as_view()),
     path("checkout-cancelled/", views.CheckoutCancelledPageView.as_view()),
-    path("webhook/", views.stripe_webhook),
+    # path("webhook/", views.stripe_webhook),
     path(
         "customer-portal/",
         views.CustomerPortalPageView.as_view(),
@@ -17,7 +17,7 @@ urlpatterns = [
     ),
     path(
         "stripe-checkout/",
-        views.stripe_checkout_session,
+        views.stripe_checkout,
         name="stripe-checkout",
     ),
     path(

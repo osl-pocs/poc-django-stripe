@@ -158,7 +158,9 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
-STATICFILES_DIRS = [str(APPS_DIR / "static")]
+STATICFILES_DIRS = [str(APPS_DIR / "static")] + [
+    str(APPS_DIR / app / "static") for app in LOCAL_APPS_NAMES
+]
 # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -181,7 +183,7 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         # https://docs.djangoproject.com/en/dev/ref/settings/#dirs
         "DIRS": [APPS_DIR / "templates"]
-        + [str(ROOT_DIR / app / "templates") for app in LOCAL_APPS_NAMES],
+        + [str(APPS_DIR / app / "templates") for app in LOCAL_APPS_NAMES],
         # https://docs.djangoproject.com/en/dev/ref/settings/#app-dirs
         "APP_DIRS": True,
         "OPTIONS": {
@@ -354,7 +356,7 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_ENDPOINT_SECRET = os.getenv("STRIPE_ENDPOINT_SECRET")
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
 # Change to True in production
-STRIPE_LIVE_MODE = False 
+STRIPE_LIVE_MODE = False
 
 ## DJSTRIPE
 DJSTRIPE_WEBHOOK_VALIDATION = "verify_signature"

@@ -1,3 +1,5 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.conf import settings
 from django.http.response import (
     JsonResponse,
@@ -6,11 +8,14 @@ from django.http.response import (
 )
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_safe
 from django.views.generic.base import TemplateView
 from django.urls import reverse
 
 import stripe
+
+from djstripe import webhooks
+from django.core.mail import send_mail
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -19,22 +24,23 @@ def _get_payments_url(request, view_name="payments:main"):
     return request.build_absolute_uri(reverse(view_name))
 
 
-class CheckoutPageView(TemplateView):
-    template_name = "checkout.html"
+class CheckoutPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/checkout.html"
 
 
-class CheckoutSuccessPageView(TemplateView):
-    template_name = "checkout-success.html"
+class CheckoutSuccessPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/checkout-success.html"
 
 
-class CheckoutCancelledPageView(TemplateView):
-    template_name = "checkout-cancelled.html"
+class CheckoutCancelledPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/checkout-cancelled.html"
 
 
-class CustomerPortalPageView(TemplateView):
-    template_name = "customer-portal.html"
+class CustomerPortalPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/customer-portal.html"
 
 
+@login_required
 @csrf_exempt
 def stripe_config(request):
     if request.method == "GET":
@@ -45,8 +51,9 @@ def stripe_config(request):
 # STRIPE
 
 
+@login_required
 @csrf_exempt
-def stripe_checkout_session(request):
+def stripe_checkout(request):
     PAYMENTS_URL = _get_payments_url(request)
 
     if request.method == "GET":
@@ -87,7 +94,7 @@ def stripe_checkout_session(request):
             return JsonResponse({"error": str(e)})
 
 
-@csrf_exempt
+""" @csrf_exempt
 def stripe_webhook(request):
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
@@ -111,20 +118,52 @@ def stripe_webhook(request):
         print("Payment was successful.")
         # TODO: run some custom code here
 
-    return HttpResponse(status=200)
+    return HttpResponse(status=200) """
 
 
+@login_required
 @require_http_methods(["POST"])
 @csrf_exempt
 def stripe_customer_portal(request):
+    customer = Customer.objects.get(subscriber=request.user)
+
     PAYMENTS_URL = _get_payments_url(
         request, view_name="payments:customer-portal"
     )
 
     # Authenticate your user.
-    CUSTOMER_ID = "cus_L2PAyHZPQVWCKc"
     session = stripe.billing_portal.Session.create(
-        customer=f"{CUSTOMER_ID}",
+        customer=customer.id,
         return_url=f"{PAYMENTS_URL}",
     )
     return HttpResponseRedirect(session.url)
+
+
+@login_required
+@require_http_methods(["POST"])
+@csrf_exempt
+def stripe_customer_portal(request):
+    stripe.Account.create(
+        country="US",
+        type="express",
+        capabilities={
+            "card_payments": {"requested": True},
+            "transfers": {"requested": True},
+        },
+        business_type="individual",
+        business_profile={"url": "https://example.com"},
+    )
+
+
+# DJ Stripe
+
+
+@webhooks.handler("customer.deleted")
+def customer_deleted_event_listener(event, **kwargs):
+    send_mail(
+        "Subscription Deleted",
+        "See ya! 👋",
+        "from@example.com",
+        ["to@example.com"],
+        fail_silently=False,
+    )

@@ -8,7 +8,9 @@ docker-start-db:
 .PHONY: migrate
 migrate:
 	python manage.py migrate
+	python manage.py djstripe_init_customers
 	python manage.py djstripe_sync_models
+	python manage.py djstripe_sync_plans_from_stripe
 
 
 .PHONY: dev-createsuperuser

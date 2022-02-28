@@ -105,6 +105,18 @@ stripe listen --forward-to localhost:8000/payments/webhook/
 For more information, check the 
 [official documentation](https://stripe.com/docs/stripe-cli).
 
+## Settings
+
+Important settings to take a look into:
+
+- Settings > Checkout and Payment Links
+- Settings > Subscriptions and emails
+- Settings > Customer portal
+- Settings > Emails
+
+## Stripe Products
+
+- Radar: Monitor fraud with machine learning. This is a PAYED product.
 
 ## Resources
 
@@ -112,3 +124,5 @@ Here there is a list with some nice resources about stripe:
 
 - https://testdriven.io/blog/django-stripe-tutorial
 - https://dj-stripe.readthedocs.io/en/master/
+- https://medium.com/@berat703/django-stripe-integration-with-using-dj-stripe-1df59d17fa73
+- https://justdjango.com/blog/django-stripe-payments-tutorial

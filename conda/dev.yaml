@@ -4,10 +4,9 @@ channels:
   - nodefaults
 dependencies:
   - python 3.9.*
-  - pip
   - psycopg2
   # dev
   - black
+  - pip
+  - poetry
   - pre-commit
-  - pip:
-    - -r ../requirements/local.txt

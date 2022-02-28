@@ -52,15 +52,15 @@
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'about' %}">About</a>
               </li>
-              <!-- note: move it to the authenticated area -->
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'payments:main' %}">Payments</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'payments:customer-portal' %}">Customer Portal</a>
-              </li>
 
               {% if request.user.is_authenticated %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'payments:main' %}">Payments</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'payments:customer-portal' %}">Customer Portal</a>
+                </li>
+                
                 <li class="nav-item">
                   {# URL provided by django-allauth/account/urls.py #}
                   <a class="nav-link" href="{% url 'users:detail' request.user.username  %}">{% translate "My Profile" %}</a>
