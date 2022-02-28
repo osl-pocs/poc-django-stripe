@@ -4,23 +4,21 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
-from .base import *  
+from .base import *
 from .base import env
 
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["opensciencelabs.org"])
-DATABASES["default"] = env.db("DATABASE_URL")  
-DATABASES["default"]["ATOMIC_REQUESTS"] = True  
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  
+DATABASES["default"] = env.db("DATABASE_URL")
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": env("REDIS_URL"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            
-            
             "IGNORE_EXCEPTIONS": True,
         },
     }
@@ -48,7 +46,7 @@ EMAIL_SUBJECT_PREFIX = env(
     default="[PoC Django Stripe]",
 )
 ADMIN_URL = env("DJANGO_ADMIN_URL")
-INSTALLED_APPS += ["anymail"]  
+INSTALLED_APPS += ["anymail"]
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 ANYMAIL = {}
 LOGGING = {
@@ -74,7 +72,7 @@ LOGGING = {
             "handlers": ["console"],
             "propagate": False,
         },
-        
+
         "sentry_sdk": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {
             "level": "ERROR",
@@ -86,8 +84,8 @@ LOGGING = {
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_LOG_LEVEL = env.int("DJANGO_SENTRY_LOG_LEVEL", logging.INFO)
 sentry_logging = LoggingIntegration(
-    level=SENTRY_LOG_LEVEL,  
-    event_level=logging.ERROR,  
+    level=SENTRY_LOG_LEVEL,
+    event_level=logging.ERROR,
 )
 integrations = [
     sentry_logging,

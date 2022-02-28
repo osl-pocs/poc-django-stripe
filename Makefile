@@ -17,4 +17,9 @@ dev-createsuperuser:
 
 .PHONY: run-tests
 run-tests:
-	pytest 
+	pytest
+
+
+.PHONY: run-server
+run-server:
+	python manage.py runserver
