@@ -17,7 +17,11 @@ import stripe
 from djstripe import webhooks
 from django.core.mail import send_mail
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = (
+    settings.STRIPE_LIVE_SECRET_KEY
+    if settings.STRIPE_LIVE_SECRET_KEY
+    else settings.STRIPE_TEST_SECRET_KEY
+)
 
 
 def _get_payments_url(request, view_name="payments:main"):

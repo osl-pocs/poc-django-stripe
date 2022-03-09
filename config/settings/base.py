@@ -63,8 +63,9 @@ THIRD_PARTY_APPS = [
     "djstripe",
 ]
 LOCAL_APPS = [
-    "poc_django_stripe.users",
+    "poc_django_stripe.contrib",
     "poc_django_stripe.payments",
+    "poc_django_stripe.users",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -239,7 +240,8 @@ SPECTACULAR_SETTINGS = {
 STRIPE_ENDPOINT_SECRET = os.getenv("STRIPE_ENDPOINT_SECRET")
 STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY")
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY")
-STRIPE_SECRET_KEY = "_whsec"
+# STRIPE_SECRET_KEY = "_whsec"
+
 STRIPE_LIVE_MODE = False
 DJSTRIPE_WEBHOOK_VALIDATION = "verify_signature"
 DJSTRIPE_USE_NATIVE_JSONFIELD = True

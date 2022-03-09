@@ -2,7 +2,7 @@
 .PHONY: migrate
 migrate:
 	python manage.py makemigrations
-	python manage.py makemigrations
+	python manage.py makemigrations payments
 	python manage.py migrate
 	python manage.py djstripe_init_customers
 	python manage.py djstripe_sync_models
