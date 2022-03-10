@@ -46,14 +46,15 @@ RUN apt-get update -y \
 
 USER poc
 
-WORKDIR /opt/services/
-
-COPY --chown=poc:poc ./conda/ /tmp/conda
-
 ENV PATH /opt/conda/envs/$ENV_NAME/bin:$PATH
 ENV PYTHONPATH='/opt/services/poc-django-stripe:/opt/services/'
 
+COPY --chown=poc:poc . /opt/services/poc-django-stripe
+
+WORKDIR /opt/services/poc-django-stripe
+
 RUN mamba env create -n $ENV_NAME --file /tmp/conda/dev.yaml \
+  && poetry install --no-dev \
   && conda clean --all \
   && find /opt/conda/ -type f,l -name '*.a' -delete \
   && find /opt/conda/ -type f,l -name '*.pyc' -delete \
