@@ -1,10 +1,27 @@
 version: '3'
 
-volumes:
-  poc_django_stripe_local_postgres_data: {}
-  poc_django_stripe_local_postgres_data_backups: {}
-
 services:
+  django-stripe:
+    env_file:
+      - ../.env
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        # note: if you want to use a specific UID and GID, ensure to add it to
+        #       the .env file
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${DJANGO_PORT}/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 40s  # requires docker-compose 3.4
+    volumes:
+      - ..:/opt/services/poc-django-stripe
+    network_mode: host
+
   stripe-cli:
     image: stripe/stripe-cli:latest
     container_name: stripe-cli
