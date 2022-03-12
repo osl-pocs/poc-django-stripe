@@ -1,22 +1,31 @@
 DOCKER=docker-compose --env-file .env --file docker/docker-compose.yaml
+DEV_USER:=admin
 
 .PHONY: migrate
 migrate:
 	python manage.py makemigrations
 	python manage.py makemigrations payments
 	python manage.py migrate
+	$(MAKE) migrate-stripe
+
+.PHONY: migrate-stripe
+migrate-stripe:
 	python manage.py djstripe_init_customers
 	python manage.py djstripe_sync_models
+	python manage.py djstripe_sync_customers
 	python manage.py djstripe_sync_plans_from_stripe
 
 
 .PHONY: dev-createsuperuser
 dev-createsuperuser:
-	DJANGO_SUPERUSER_PASSWORD=admin \
+	DJANGO_SUPERUSER_PASSWORD=${DEV_USER} \
 		python manage.py createsuperuser \
-		--username admin \
-		--email admin@localhost \
+		--username ${DEV_USER} \
+		--email ${DEV_USER}@opensciencelabs.org \
 		--noinput
+
+.PHONY: dev-migrate
+dev-migrate: migrate dev-createsuperuser
 
 .PHONY: run-tests
 run-tests:
@@ -62,15 +71,7 @@ docker-wait:
 .PHONY:docker-dev-prepare-db
 docker-dev-prepare-db:
 	# used for development
-	$(DOCKER) exec -T epigraphhub bash /opt/EpiGraphHub/docker/prepare-db.sh
-
-
-.PHONY:docker-run-cron
-docker-run-cron:
-	$(DOCKER) exec -T ${SERVICE} bash /opt/EpiGraphHub/Data_Collection/CRON_scripts/owid.sh
-	$(DOCKER) exec -T ${SERVICE} bash /opt/EpiGraphHub/Data_Collection/CRON_scripts/foph.sh
-	# $(DOCKER) exec -T ${SERVICE} bash /opt/EpiGraphHub/Data_Collection/CRON_scripts/forecast.sh
-
+	$(DOCKER) exec -T poc-django-stripe bash /opt/poc-django-stripe/docker/prepare-db.sh
 
 .PHONY:docker-bash
 docker-bash:

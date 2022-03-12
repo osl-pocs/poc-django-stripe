@@ -51,3 +51,8 @@ jobs:
 
     - name: tests
       run: make run-tests
+
+    - name: lint
+      run: |
+        pre-commit install
+        pre-commit run --all-files

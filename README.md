@@ -102,7 +102,7 @@ order to listening to the webhook:
 stripe listen --forward-to localhost:8000/payments/webhook/
 ```
 
-For more information, check the 
+For more information, check the
 [official documentation](https://stripe.com/docs/stripe-cli).
 
 ## Settings

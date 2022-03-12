@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}User: {{ object.username }}{% endblock %}
+
+{% block content %}
+<script src="https://js.stripe.com/v3/"></script>
+<script src="{% static 'payments/js/main.js' %}"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
+
+<div class="container">
+
+  <div class="row">
+    <div class="col-sm-12">
+
+      <h2>{{ object.username }}</h2>
+      {% if object.name %}
+      <p>{{ object.name }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <h3>Payments</h3>
+  <hr />
+  <!-- Action buttons -->
+  <div class="row">
+
+    <div class="col-sm-3">
+      {% url 'payments:main' as main_url %}
+      {% url 'payments:customer-portal' as customer_portal_url %}
+      {% url 'payments:subscription' as subscription_url %}
+      <div
+        class="nav flex-column nav-pills"
+        id="v-payments-tab"
+        role="tablist"
+        aria-orientation="vertical"
+      >
+        <a
+          class="nav-link{% if request.path == main_url %} active{% endif %}"
+          id="v-payments-main-tab"
+          data-toggle="pill"
+          href="{% url 'payments:main' %}"
+          role="tab"
+          aria-controls="v-payments-main"
+          aria-selected="true">Main</a>
+        <a
+          class="nav-link{% if request.path == customer_portal_url %} active{% endif %}"
+          id="v-payments-customer-portal-tab"
+          data-toggle="pill"
+          href="{% url 'payments:customer-portal' %}"
+          role="tab"
+          aria-controls="v-payments-customer-portal"
+          aria-selected="false">Customer Portal</a>
+        <a
+          class="nav-link{% if request.path == subscription_url %} active{% endif %}"
+          id="v-payments-subscriptions-tab"
+          data-toggle="pill"
+          href="{% url 'payments:subscription' %}"
+          role="tab"
+          aria-controls="v-payments-subscriptions"
+          aria-selected="false">Subscriptions</a>
+      </div>
+    </div>
+
+    <div class="col-sm-9">
+      {% block inner_content %}PLACEHOLDER{% endblock %}
+    </div>
+
+  </div>
+  <!-- End Action buttons -->
+
+</div>
+{% endblock content %}

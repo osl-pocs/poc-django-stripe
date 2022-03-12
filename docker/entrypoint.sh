@@ -8,7 +8,7 @@ if [ $is_conda_in_path == 0 ]; then
   echo "[II] included conda to the PATH"
 fi
 
-echo "[II] activate epigraphhub"
+echo "[II] activate poc-django-stripe"
 source activate poc-django-stripe
 
 

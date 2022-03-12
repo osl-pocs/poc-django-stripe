@@ -5,7 +5,6 @@ from pathlib import Path
 
 import environ
 
-
 if __name__ == "__main__":
     ROOT_DIR = Path(__file__).resolve(strict=True).parent
     env = environ.Env()
@@ -37,6 +36,7 @@ if __name__ == "__main__":
 
     # Override default port for `runserver` command
     from django.core.management.commands.runserver import Command as runserver
+
     runserver.default_port = "8081"
 
     execute_from_command_line(sys.argv)

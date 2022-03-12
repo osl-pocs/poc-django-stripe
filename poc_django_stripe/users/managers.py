@@ -14,6 +14,6 @@ class UserManager(BaseUserManager):
             is_staff=True,
             is_superuser=True,
         )
-        
+
         user.save(using=self._db)
         return user

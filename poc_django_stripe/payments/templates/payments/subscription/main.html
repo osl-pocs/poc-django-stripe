@@ -1,0 +1,38 @@
+{% extends "payments/base.html" %}
+
+{% block inner_content %}
+
+  <div class="row gy-3">
+    {% for product in products %}
+    <div class="col-sm-4">
+      <div class="card h-100">
+        {% if product.image %}
+          <div class="card-header">
+            <img src="{{ product.image }}"
+              class="card-img-top my-0" alt="{{ product.name }}">
+          </div>
+        {% endif %}
+        <div class="card-body text-center">
+          <h5 class="card-title">{{ product.name }}</h5>
+          <p class="card-text">{{ product.description }}</p>
+
+          <span class="icon">
+            <i class="fa {% if product.metadata.is_default %}fa-check{% else %}fa-circle{% endif %}">
+            </i>
+          </span>
+        </div>
+
+        <div class="card-footer  text-center">
+          <a href="javascript:purchase('{% url "payments:stripe-subscription" product_id=product.id %}');"
+            class="btn btn-primary{% if product.subscribed %} disabled{% endif %}">
+              {{ product.price.unit_amount }}
+              {{ product.price.currency.upper }}/{{ product.price.interval }}
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock inner_content %}
