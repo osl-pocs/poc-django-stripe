@@ -1,4 +1,5 @@
 {% extends "payments/base.html" %}
+{% load i18n %}
 
 {% block inner_content %}
 
@@ -15,19 +16,27 @@
         <div class="card-body text-center">
           <h5 class="card-title">{{ product.name }}</h5>
           <p class="card-text">{{ product.description }}</p>
-
-          <span class="icon">
-            <i class="fa {% if product.metadata.is_default %}fa-check{% else %}fa-circle{% endif %}">
-            </i>
-          </span>
         </div>
 
         <div class="card-footer  text-center">
-          <a href="javascript:purchase('{% url "payments:stripe-subscription" product_id=product.id %}');"
-            class="btn btn-primary{% if product.subscribed %} disabled{% endif %}">
+          {% if product.subscription.status == "none" %}
+          <a href="javascript:subscription_purchase('{% url "payments:stripe-subscription" product_id=product.id %}');"
+            class="btn btn-primary">
               {{ product.price.unit_amount }}
               {{ product.price.currency.upper }}/{{ product.price.interval }}
           </a>
+          {% elif product.subscription.status == "subscribed" %}
+          <a
+            href="javascript:subscription_cancel('{{ product.subscription.cancel_url }}');"
+            class="btn btn-danger"
+          >Cancel Subscription</a>
+          {% elif product.subscription.status == "cancelled" %}
+          <a
+            href="javascript:subscription_reactivate('{{ product.subscription.reactivate_url }}');"
+            class="btn btn-primary"
+          >Reactivate ({{ product.price.unit_amount }}
+          {{ product.price.currency.upper }}/{{ product.price.interval }})</a>
+          {% endif %}
         </div>
       </div>
     </div>

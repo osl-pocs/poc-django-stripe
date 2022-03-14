@@ -1,5 +1,5 @@
 
-function purchase(url) {
+function subscription_purchase(url) {
   // Get Stripe publishable key
   fetch("/payments/config/")
   .then((result) => { return result.json(); })
@@ -19,5 +19,15 @@ function purchase(url) {
       console.log(res);
     });
   });
+}
 
+
+function subscription_cancel(url) {
+  const msg = 'Are you sure you want to cancel your subscription?';
+  confirm_message(url, msg);
+}
+
+function subscription_reactivate(url) {
+  const msg = 'Are you sure you want to reactivate your subscription?';
+  confirm_message(url, msg);
 }

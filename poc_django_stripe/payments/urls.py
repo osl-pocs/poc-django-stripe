@@ -22,6 +22,16 @@ urlpatterns = [
         views.SubscriptionCancelledPageView.as_view(),
         name="subscription-cancelled",
     ),
+    path(
+        "subscription/<str:subscription_id>/cancel",
+        views.SubscriptionCancelView.as_view(),
+        name="subscription-cancel",
+    ),
+    path(
+        "subscription/<str:subscription_id>/reactivate",
+        views.SubscriptionReactivateView.as_view(),
+        name="subscription-reactivate",
+    ),
     # path("webhook/", views.stripe_webhook),
     path(
         "customer-portal/",

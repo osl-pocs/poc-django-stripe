@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 import stripe
 from django.conf import settings
 from django.contrib import messages
@@ -5,13 +8,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.http.response import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic.base import TemplateView
 from djstripe import webhooks
-from djstripe.models import Customer, Product  # , Subscription
+from djstripe.models import Customer, Product, Subscription
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -25,25 +28,60 @@ class MainPageView(LoginRequiredMixin, TemplateView):
 
 
 class SubscriptionPageView(LoginRequiredMixin, TemplateView):
-    template_name = "payments/subscription/main.html"
+    template_name = "payments/subscriptions.html"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+
+        customer = Customer.objects.get(subscriber=self.request.user)
+        subscriptions = Subscription.objects.filter(
+            status="active", customer_id=customer.id
+        )
 
         products = []
         for p in Product.objects.filter(active=True):
             prices = p.prices.filter(active=True)
             price = prices.first() if len(prices) else None
 
-            # subscriptions = Subscription.objects.filter(active=True)
+            subscriptions_product = subscriptions.filter(plan__product=p)
+            subscription = (
+                subscriptions_product.first()
+                if subscriptions_product
+                else None
+            )
+
+            # note: subscription.status (it is not from stripe):
+            #         - none
+            #         - subscribed
+            #         - cancelled
 
             product = {
                 "id": p.id,
                 "name": p.name,
                 "description": p.description,
                 "image": p.images[0] if p.images else None,
-                "subscribed": False,
+                "subscription": {
+                    "status": ("subscribed" if bool(subscription) else "none"),
+                },
             }
+
+            if subscription:
+                product["subscription"].update(
+                    {
+                        "id": subscription.id,
+                        "cancel_url": reverse(
+                            "payments:subscription-cancel",
+                            kwargs={"subscription_id": subscription.id},
+                        ),
+                    }
+                )
+                if subscription.cancel_at_period_end:
+                    product["subscription"]["status"] = "cancelled"
+                    product["subscription"]["reactivate_url"] = reverse(
+                        "payments:subscription-reactivate",
+                        kwargs={"subscription_id": subscription.id},
+                    )
+
             if price:
                 product["price"] = {
                     "unit_amount": f"{price.unit_amount_decimal/100:.2f}",
@@ -57,18 +95,41 @@ class SubscriptionPageView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class SubscriptionSuccessPageView(SubscriptionPageView):
+class SubscriptionSuccessPageView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        messages.success(request, "Profile details updated.")
-        return render(request, self.template_name, context=context)
+        # note: maybe should be changed to something more simple
+        subprocess.run(
+            "python manage.py djstripe_sync_models Subscription",
+            shell=True,
+            env=os.environ.copy(),
+            capture_output=True,
+        )
+        messages.success(request, "Successful payment.")
+        return redirect("payments:subscription")
 
 
-class SubscriptionCancelledPageView(SubscriptionPageView):
+class SubscriptionCancelledPageView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
         messages.warning(request, "Your payment was cancelled.")
-        return render(request, self.template_name, context=context)
+        return redirect("payments:subscription")
+
+
+class SubscriptionCancelView(LoginRequiredMixin, TemplateView):
+    def get(self, request, subscription_id: str, *args, **kwargs):
+        subscription = Subscription.objects.get(id=subscription_id)
+        subscription.cancel_at_period_end = True
+        subscription.save()
+        messages.warning(request, "Your payment was cancelled.")
+        return redirect("payments:subscription")
+
+
+class SubscriptionReactivateView(LoginRequiredMixin, TemplateView):
+    def get(self, request, subscription_id: str, *args, **kwargs):
+        subscription = Subscription.objects.get(id=subscription_id)
+        subscription.cancel_at_period_end = False
+        subscription.save()
+        messages.success(request, "Your subscription was reactivated.")
+        return redirect("payments:subscription")
 
 
 class CustomerPortalPageView(LoginRequiredMixin, TemplateView):
@@ -109,8 +170,8 @@ def stripe_subscription(request, product_id=1):
             customer = Customer.objects.get(subscriber=request.user)
             product = Product.objects.get(id=product_id)
             checkout_session = stripe.checkout.Session.create(
-                # new
                 client_reference_id=customer.id,
+                customer=customer.id,
                 success_url=(
                     _get_payments_url(request, "payments:subscription-success")
                     + "?session_id={CHECKOUT_SESSION_ID}"
