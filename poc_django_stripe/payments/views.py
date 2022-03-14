@@ -34,7 +34,7 @@ class SubscriptionPageView(LoginRequiredMixin, TemplateView):
 
         customer = Customer.objects.get(subscriber=self.request.user)
         subscriptions = Subscription.objects.filter(
-            status="active", customer_id=customer.id, canceled_at__isnull=True
+            status="active", customer_id=customer.id
         )
 
         products = []
@@ -77,10 +77,7 @@ class SubscriptionPageView(LoginRequiredMixin, TemplateView):
                         ),
                     }
                 )
-                if (
-                    subscription.cancel_at_period_end
-                    and not subscription.canceled_at
-                ):
+                if subscription.cancel_at_period_end:
                     product["subscription"]["status"] = "cancelled"
                     product["subscription"]["reactivate_url"] = reverse(
                         "payments:subscription-reactivate",
