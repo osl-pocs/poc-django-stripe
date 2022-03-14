@@ -13,6 +13,11 @@ urlpatterns = [
         name="subscription",
     ),
     path(
+        "stripe/subscription/<str:product_id>/<str:price_id>",
+        views.stripe_subscription,
+        name="stripe-subscription",
+    ),
+    path(
         "subscription/success/",
         views.SubscriptionSuccessPageView.as_view(),
         name="subscription-success",
@@ -37,11 +42,6 @@ urlpatterns = [
         "customer-portal/",
         views.CustomerPortalPageView.as_view(),
         name="customer-portal",
-    ),
-    path(
-        "stripe/subscription/<str:product_id>",
-        views.stripe_subscription,
-        name="stripe-subscription",
     ),
     path(
         "stripe/customer-portal/",

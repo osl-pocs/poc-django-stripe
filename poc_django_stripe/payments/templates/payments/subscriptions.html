@@ -20,7 +20,7 @@
 
         <div class="card-footer  text-center">
           {% if product.subscription.status == "none" %}
-          <a href="javascript:subscription_purchase('{% url "payments:stripe-subscription" product_id=product.id %}');"
+          <a href="javascript:subscription_purchase('{% url "payments:stripe-subscription" product_id=product.id price_id=product.price.id %}');"
             class="btn btn-primary">
               {{ product.price.unit_amount }}
               {{ product.price.currency.upper }}/{{ product.price.interval }}
