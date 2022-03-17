@@ -41,17 +41,9 @@ class SubscriptionPageView(LoginRequiredMixin, TemplateView):
         products = []
         for p in Product.objects.filter(active=True):
             prices = p.prices.filter(active=True)
-            price = prices.first() if len(prices) else None
 
-            if not price:
+            if not len(prices):
                 continue
-
-            subscriptions_product = subscriptions.filter(plan__product=p)
-            subscription = (
-                subscriptions_product.first()
-                if subscriptions_product
-                else None
-            )
 
             # note: subscription.status (it is not from stripe):
             #         - none
@@ -63,35 +55,40 @@ class SubscriptionPageView(LoginRequiredMixin, TemplateView):
                 "name": p.name,
                 "description": p.description,
                 "image": p.images[0] if p.images else None,
-                "subscription": {
-                    "status": ("subscribed" if bool(subscription) else "none"),
-                },
             }
 
-            if subscription:
-                product["subscription"].update(
-                    {
-                        "id": subscription.id,
-                        "cancel_url": reverse(
-                            "payments:subscription-cancel",
-                            kwargs={"subscription_id": subscription.id},
-                        ),
-                    }
-                )
-                if subscription.cancel_at_period_end:
-                    product["subscription"]["status"] = "cancelled"
-                    product["subscription"]["reactivate_url"] = reverse(
-                        "payments:subscription-reactivate",
-                        kwargs={"subscription_id": subscription.id},
+            product["prices"] = []
+            for price in prices:
+                price_content = {
+                    "id": price.id,
+                    "unit_amount": f"{price.unit_amount_decimal/100:.2f}",
+                    "currency": price.currency,
+                    "interval": price.recurring["interval"],
+                }
+                subscriptions_prices = subscriptions.filter(plan__id=price.id)
+
+                price_content["subscription"] = {"status": "none"}
+                if subscriptions_prices.count():
+                    subscription = subscriptions_prices.first()
+                    price_content["subscription"].update(
+                        {
+                            "id": subscription.id,
+                            "status": "subscribed",
+                            "cancel_url": reverse(
+                                "payments:subscription-cancel",
+                                kwargs={"subscription_id": subscription.id},
+                            ),
+                        }
                     )
-
-            product["price"] = {
-                "id": price.id,
-                "unit_amount": f"{price.unit_amount_decimal/100:.2f}",
-                "currency": price.currency,
-                "interval": price.recurring["interval"],
-            }
-
+                    if subscription.cancel_at_period_end:
+                        price_content["subscription"]["status"] = "cancelled"
+                        price_content["subscription"][
+                            "reactivate_url"
+                        ] = reverse(
+                            "payments:subscription-reactivate",
+                            kwargs={"subscription_id": subscription.id},
+                        )
+                product["prices"].append(price_content)
             products.append(product)
 
         context["products"] = products
@@ -196,7 +193,11 @@ def stripe_subscription(request, product_id: str, price_id: str):
 
 @csrf_exempt
 def stripe_webhook(request):
-    # WORKING HERE
+    """
+    Reference
+    ---------
+    https://stripe.com/docs/webhooks/signatures
+    """
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
     payload = request.body

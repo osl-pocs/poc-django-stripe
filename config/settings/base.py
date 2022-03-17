@@ -329,6 +329,12 @@ SPECTACULAR_SETTINGS = {
 STRIPE_TEST_SECRET_KEY = env("STRIPE_TEST_SECRET_KEY")
 STRIPE_LIVE_SECRET_KEY = env("STRIPE_LIVE_SECRET_KEY", default="sk_live_")
 STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
+# If you are testing your webhook locally with the Stripe CLI you
+# can find the endpoint's secret by running `stripe listen`
+# Otherwise, find your endpoint's secret in your webhook
+# settings in the Developer Dashboard
+# ref: https://stripe.com/docs/webhooks/signatures
+STRIPE_ENDPOINT_SECRET = env("STRIPE_ENDPOINT_SECRET", default="whsec_xxx")
 
 STRIPE_SECRET_KEY = STRIPE_TEST_SECRET_KEY if DEBUG else STRIPE_LIVE_SECRET_KEY
 
@@ -338,4 +344,4 @@ DJSTRIPE_USE_NATIVE_JSONFIELD = True
 # Set to `"id"` for all new 2.4+ installations
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # We don't use this, but it must be set
-DJSTRIPE_WEBHOOK_SECRET = "whsec_xxx"
+DJSTRIPE_WEBHOOK_SECRET = STRIPE_ENDPOINT_SECRET
