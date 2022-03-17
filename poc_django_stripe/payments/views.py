@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
+from django.http import HttpResponse
 from django.http.response import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -193,8 +194,9 @@ def stripe_subscription(request, product_id: str, price_id: str):
             return JsonResponse({"error": str(e)})
 
 
-""" @csrf_exempt
+@csrf_exempt
 def stripe_webhook(request):
+    # WORKING HERE
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
     payload = request.body
@@ -205,19 +207,27 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret
         )
-    except ValueError as e:
+    except ValueError:
         # Invalid payload
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.error.SignatureVerificationError:
         # Invalid signature
         return HttpResponse(status=400)
+
+    print("=" * 80)
+    print(event["type"])
+    print("=" * 80)
 
     # Handle the checkout.session.completed event
     if event["type"] == "checkout.session.completed":
         print("Payment was successful.")
         # TODO: run some custom code here
 
-    return HttpResponse(status=200) """
+    if event["type"] == "checkout.session.completed":
+        print("Payment was cancelled.")
+        # TODO: run some custom code here
+
+    return HttpResponse(status=200)
 
 
 @login_required

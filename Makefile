@@ -80,3 +80,7 @@ docker-bash:
 .PHONY:docker-run-bash
 docker-run-bash:
 	$(DOCKER) run --rm ${SERVICE} bash
+
+.PHONY:docker-run-stripe-cli
+docker-run-stripe-cli:
+	$(DOCKER) run --rm stripe-cli

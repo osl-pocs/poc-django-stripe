@@ -7,6 +7,7 @@ dependencies:
   - psycopg2
   # dev
   - black
+  - docker-compose
   - pip
   - poetry
   - pre-commit

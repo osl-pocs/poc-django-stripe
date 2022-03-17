@@ -37,7 +37,7 @@ urlpatterns = [
         views.SubscriptionReactivateView.as_view(),
         name="subscription-reactivate",
     ),
-    # path("webhook/", views.stripe_webhook),
+    path("webhook/", views.stripe_webhook),
     path(
         "customer-portal/",
         views.CustomerPortalPageView.as_view(),

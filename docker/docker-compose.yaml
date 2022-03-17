@@ -27,8 +27,17 @@ services:
     container_name: stripe-cli
     stdin_open: true
     tty: true
+    privileged: true
     env_file:
       - ../.env
+    environment:
+      - DISPLAY=${DISPLAY}
     network_mode: host
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
     entrypoint: /bin/sh
     command: ""
