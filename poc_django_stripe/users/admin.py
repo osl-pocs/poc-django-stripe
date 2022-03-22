@@ -3,7 +3,10 @@ from django.contrib.auth import admin as auth_admin
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
-from poc_django_stripe.users.forms import UserAdminChangeForm, UserAdminCreationForm
+from poc_django_stripe.users.forms import (
+    UserAdminChangeForm,
+    UserAdminCreationForm,
+)
 
 User = get_user_model()
 

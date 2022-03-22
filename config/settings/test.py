@@ -10,7 +10,7 @@ from .base import env
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
-    default="uTzsv9epg6MWOyujgHV6QEVZ0LXCDM6PPyjrkOaHu5K9u9FqBSMWpFdv2Mib0UXH",
+    default="CiDtNrDyHTKGUmu5SxOH3u3oSQ1EM3APOR4eVdLdgtOUymT8X10o7BfttB6yk3eZ",
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
@@ -24,6 +24,3 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
-
-# Your stuff...
-# ------------------------------------------------------------------------------

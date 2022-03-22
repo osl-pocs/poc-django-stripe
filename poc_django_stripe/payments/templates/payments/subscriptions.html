@@ -1,0 +1,50 @@
+{% extends "payments/base.html" %}
+{% load i18n %}
+
+{% block inner_content %}
+
+  <div class="row gy-3">
+    {% for product in products %}
+    <div class="col-sm-4">
+      <div class="card h-100">
+        {% if product.image %}
+          <div class="card-header">
+            <img src="{{ product.image }}"
+              class="card-img-top my-0" alt="{{ product.name }}">
+          </div>
+        {% endif %}
+        <div class="card-body text-center">
+          <h5 class="card-title">{{ product.name }}</h5>
+          <p class="card-text">{{ product.description }}</p>
+        </div>
+
+        {% for price in product.prices %}
+        <div class="card-footer  text-center">
+          <strong>
+            {{ price.unit_amount }} {{ price.currency.upper }}/{{ price.interval }}
+          </strong>
+          {% if price.subscription.status == "none" %}
+          <a href="javascript:subscription_purchase('{% url "payments:stripe-subscription" product_id=product.id price_id=price.id %}');"
+            class="btn btn-primary">
+              Subscribe
+          </a>
+          {% elif price.subscription.status == "subscribed" %}
+          <a
+            href="javascript:subscription_cancel('{{ price.subscription.cancel_url }}');"
+            class="btn btn-danger"
+          >Cancel</a>
+          {% elif price.subscription.status == "cancelled" %}
+          <a
+            href="javascript:subscription_reactivate('{{ price.subscription.reactivate_url }}');"
+            class="btn btn-primary"
+          >Reactivate</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock inner_content %}

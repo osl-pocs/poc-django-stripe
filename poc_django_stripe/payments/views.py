@@ -1,21 +1,20 @@
+import stripe
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.conf import settings
-from django.http.response import (
-    JsonResponse,
-    HttpResponse,
-    HttpResponseRedirect,
-)
-from django.shortcuts import redirect
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods, require_safe
-from django.views.generic.base import TemplateView
-from django.urls import reverse
-
-import stripe
-
-from djstripe import webhooks
 from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.http.response import HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.views.generic.base import TemplateView
+from djstripe import webhooks
+from djstripe.models import Customer, Product, Subscription
+
+from .utils import sync_subscriptions
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -24,16 +23,115 @@ def _get_payments_url(request, view_name="payments:main"):
     return request.build_absolute_uri(reverse(view_name))
 
 
-class CheckoutPageView(LoginRequiredMixin, TemplateView):
-    template_name = "payments/checkout.html"
+class MainPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/main.html"
 
 
-class CheckoutSuccessPageView(LoginRequiredMixin, TemplateView):
-    template_name = "payments/checkout-success.html"
+class SubscriptionPageView(LoginRequiredMixin, TemplateView):
+    template_name = "payments/subscriptions.html"
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        customer = Customer.objects.get(subscriber=self.request.user)
+        subscriptions = Subscription.objects.filter(
+            status="active", customer_id=customer.id
+        )
+
+        products = []
+        for p in Product.objects.filter(active=True):
+            prices = p.prices.filter(active=True)
+
+            if not len(prices):
+                continue
+
+            # note: subscription.status (it is not from stripe):
+            #         - none
+            #         - subscribed
+            #         - cancelled
+
+            product = {
+                "id": p.id,
+                "name": p.name,
+                "description": p.description,
+                "image": p.images[0] if p.images else None,
+            }
+
+            product["prices"] = []
+            for price in prices:
+                price_content = {
+                    "id": price.id,
+                    "unit_amount": f"{price.unit_amount_decimal/100:.2f}",
+                    "currency": price.currency,
+                    "interval": price.recurring["interval"],
+                }
+                subscriptions_prices = subscriptions.filter(plan__id=price.id)
+
+                price_content["subscription"] = {"status": "none"}
+                if subscriptions_prices.count():
+                    subscription = subscriptions_prices.first()
+                    price_content["subscription"].update(
+                        {
+                            "id": subscription.id,
+                            "status": "subscribed",
+                            "cancel_url": reverse(
+                                "payments:subscription-cancel",
+                                kwargs={"subscription_id": subscription.id},
+                            ),
+                        }
+                    )
+                    if subscription.cancel_at_period_end:
+                        price_content["subscription"]["status"] = "cancelled"
+                        price_content["subscription"][
+                            "reactivate_url"
+                        ] = reverse(
+                            "payments:subscription-reactivate",
+                            kwargs={"subscription_id": subscription.id},
+                        )
+                product["prices"].append(price_content)
+            products.append(product)
+
+        context["products"] = products
+        return context
 
 
-class CheckoutCancelledPageView(LoginRequiredMixin, TemplateView):
-    template_name = "payments/checkout-cancelled.html"
+class SubscriptionSuccessPageView(LoginRequiredMixin, TemplateView):
+    def get(self, request, *args, **kwargs):
+        # note: maybe should be changed to something more simple
+        sync_subscriptions()
+        messages.success(request, "Successful payment.")
+        return redirect("payments:subscription")
+
+
+class SubscriptionCancelledPageView(LoginRequiredMixin, TemplateView):
+    def get(self, request, *args, **kwargs):
+        messages.warning(request, "Your payment was cancelled.")
+        return redirect("payments:subscription")
+
+
+class SubscriptionCancelView(LoginRequiredMixin, TemplateView):
+    def get(self, request, subscription_id: str, *args, **kwargs):
+        # subscription = Subscription.objects.get(id=subscription_id)
+        # subscription.cancel_at_period_end = True
+        # subscription.save()
+        stripe.Subscription.modify(subscription_id, cancel_at_period_end=True)
+        sync_subscriptions()
+        messages.warning(request, "Your payment was cancelled.")
+        return redirect("payments:subscription")
+
+
+class SubscriptionReactivateView(LoginRequiredMixin, TemplateView):
+    def get(self, request, subscription_id: str, *args, **kwargs):
+        # subscription = Subscription.objects.get(id=subscription_id)
+        # subscription.cancel_at_period_end = False
+        # subscription.save()
+        stripe.Subscription.modify(
+            subscription_id,
+            cancel_at_period_end=False,
+        )
+        sync_subscriptions()
+        messages.success(request, "Your subscription was reactivated.")
+        return redirect("payments:subscription")
 
 
 class CustomerPortalPageView(LoginRequiredMixin, TemplateView):
@@ -43,6 +141,9 @@ class CustomerPortalPageView(LoginRequiredMixin, TemplateView):
 @login_required
 @csrf_exempt
 def stripe_config(request):
+    """
+    ref: https://stripe.com/docs/billing/subscriptions/integrating-customer-portal
+    """
     if request.method == "GET":
         stripe_config = {"publicKey": settings.STRIPE_PUBLISHABLE_KEY}
         return JsonResponse(stripe_config, safe=False)
@@ -53,9 +154,7 @@ def stripe_config(request):
 
 @login_required
 @csrf_exempt
-def stripe_checkout(request):
-    PAYMENTS_URL = _get_payments_url(request)
-
+def stripe_subscription(request, product_id: str, price_id: str):
     if request.method == "GET":
         try:
             # Create new Checkout Session for the order
@@ -70,32 +169,35 @@ def stripe_checkout(request):
 
             # ?session_id={CHECKOUT_SESSION_ID} means the redirect
             # will have the session ID set as a query param
+            customer = Customer.objects.get(subscriber=request.user)
             checkout_session = stripe.checkout.Session.create(
-                # new
-                client_reference_id=request.user.id
-                if request.user.is_authenticated
-                else None,
-                success_url=PAYMENTS_URL
-                + "checkout-success?session_id={CHECKOUT_SESSION_ID}",
-                cancel_url=PAYMENTS_URL + "checkout-cancelled/",
+                client_reference_id=customer.id,
+                customer=customer.id,
+                success_url=(
+                    _get_payments_url(request, "payments:subscription-success")
+                    + "?session_id={CHECKOUT_SESSION_ID}"
+                ),
+                cancel_url=(
+                    _get_payments_url(
+                        request, "payments:subscription-cancelled"
+                    )
+                ),
                 payment_method_types=["card"],
-                mode="payment",
-                line_items=[
-                    {
-                        "name": "T-shirt",
-                        "quantity": 1,
-                        "currency": "usd",
-                        "amount": "2000",
-                    }
-                ],
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
             )
             return JsonResponse({"sessionId": checkout_session["id"]})
         except Exception as e:
             return JsonResponse({"error": str(e)})
 
 
-""" @csrf_exempt
+@csrf_exempt
 def stripe_webhook(request):
+    """
+    Reference
+    ---------
+    https://stripe.com/docs/webhooks/signatures
+    """
     stripe.api_key = settings.STRIPE_SECRET_KEY
     endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
     payload = request.body
@@ -106,19 +208,27 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret
         )
-    except ValueError as e:
+    except ValueError:
         # Invalid payload
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.error.SignatureVerificationError:
         # Invalid signature
         return HttpResponse(status=400)
+
+    print("=" * 80)
+    print(event["type"])
+    print("=" * 80)
 
     # Handle the checkout.session.completed event
     if event["type"] == "checkout.session.completed":
         print("Payment was successful.")
         # TODO: run some custom code here
 
-    return HttpResponse(status=200) """
+    if event["type"] == "checkout.session.completed":
+        print("Payment was cancelled.")
+        # TODO: run some custom code here
+
+    return HttpResponse(status=200)
 
 
 @login_required
@@ -139,20 +249,20 @@ def stripe_customer_portal(request):
     return HttpResponseRedirect(session.url)
 
 
-@login_required
-@require_http_methods(["POST"])
-@csrf_exempt
-def stripe_customer_portal(request):
-    stripe.Account.create(
-        country="US",
-        type="express",
-        capabilities={
-            "card_payments": {"requested": True},
-            "transfers": {"requested": True},
-        },
-        business_type="individual",
-        business_profile={"url": "https://example.com"},
-    )
+# @login_required
+# @require_http_methods(["POST"])
+# @csrf_exempt
+# def stripe_customer_portal(request):
+#     stripe.Account.create(
+#         country="US",
+#         type="express",
+#         capabilities={
+#             "card_payments": {"requested": True},
+#             "transfers": {"requested": True},
+#         },
+#         business_type="individual",
+#         business_profile={"url": "https://example.com"},
+#     )
 
 
 # DJ Stripe
