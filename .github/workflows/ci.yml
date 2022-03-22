@@ -31,7 +31,9 @@ jobs:
 
     - name: Create environment variables file
       run: |
-        envsubst < .env.tpl > .env
+        envsubst < .env.tpl > .env-base
+          grep -v "=$" .env-base > .env
+          rm .env-base
 
     - uses: conda-incubator/setup-miniconda@v2
       with:

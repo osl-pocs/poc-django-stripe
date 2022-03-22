@@ -20,23 +20,24 @@
 
         {% for price in product.prices %}
         <div class="card-footer  text-center">
+          <strong>
+            {{ price.unit_amount }} {{ price.currency.upper }}/{{ price.interval }}
+          </strong>
           {% if price.subscription.status == "none" %}
           <a href="javascript:subscription_purchase('{% url "payments:stripe-subscription" product_id=product.id price_id=price.id %}');"
             class="btn btn-primary">
-              {{ price.unit_amount }}
-              {{ price.currency.upper }}/{{ price.interval }}
+              Subscribe
           </a>
           {% elif price.subscription.status == "subscribed" %}
           <a
             href="javascript:subscription_cancel('{{ price.subscription.cancel_url }}');"
             class="btn btn-danger"
-          >Cancel Subscription</a>
+          >Cancel</a>
           {% elif price.subscription.status == "cancelled" %}
           <a
             href="javascript:subscription_reactivate('{{ price.subscription.reactivate_url }}');"
             class="btn btn-primary"
-          >Reactivate ({{ price.unit_amount }}
-          {{ price.currency.upper }}/{{ price.interval }})</a>
+          >Reactivate</a>
           {% endif %}
         </div>
         {% endfor %}
