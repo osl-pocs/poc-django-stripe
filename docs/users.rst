@@ -12,4 +12,3 @@ but you’ll be able to customize it in the future if the need arises.
 .. automodule:: poc_django_stripe.users.models
    :members:
    :noindex:
-

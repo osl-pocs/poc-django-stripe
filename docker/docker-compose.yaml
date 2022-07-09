@@ -41,3 +41,9 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
     entrypoint: /bin/sh
     command: ""
+
+  stripe-mock:
+    image: stripe/stripe-mock:latest
+    container_name: stripe-mock
+    ports:
+      - 12111-12112:12111-12112
