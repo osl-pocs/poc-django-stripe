@@ -1,33 +1,75 @@
-exclude: "^docs/|/migrations/"
-default_stages: [commit]
+default_stages:
+  - commit
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
-      - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: check-yaml
 
-  - repo: https://github.com/psf/black
-    rev: 21.12b0
+  - repo: local
     hooks:
-      - id: black
+    - entry: django-upgrade --target-version 3.2
+      exclude: ^$
+      id: django-upgrade
+      language: system
+      name: django-upgrade
+      pass_filenames: true
+      stages:
+        - commit
+      types:
+        - python
+      types_or: []
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
+    - entry: black
+      exclude: ^$
+      files: ""
+      id: black
+      language: system
+      name: black
+      pass_filenames: true
+      stages:
+        - commit
+      types:
+        - python
+        - file
+      types_or: []
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-        args: ["--config=setup.cfg"]
-        additional_dependencies: [flake8-isort]
+    - entry: isort
+      exclude: "^.*/js/.*$"
+      files: ""
+      id: isort
+      language: python
+      name: isort
+      pass_filenames: true
+      stages:
+        - commit
+      types:
+        - python
 
-# sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
-ci:
-  autoupdate_schedule: weekly
-  skip: []
-  submodules: false
+    - entry: flake8
+      exclude: ^$
+      files: ""
+      id: flake8
+      language: python
+      name: flake8
+      pass_filenames: true
+      stages:
+        - commit
+      types:
+        - python
+      types_or: []
+
+    - entry: mypy
+      exclude: ^$
+      # note: it would be good to extend this to other apps as well
+      files: "admin_dashboard/"
+      id: mypy
+      language: python
+      name: mypy
+      pass_filenames: true
+      stages:
+        - commit
+      types:
+        - python
+      types_or: []
