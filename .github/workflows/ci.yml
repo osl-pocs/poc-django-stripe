@@ -60,6 +60,8 @@ jobs:
       run: make migrate
 
     - name: tests
+      env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
       run: make run-tests
 
     - name: stop stripe mock service
