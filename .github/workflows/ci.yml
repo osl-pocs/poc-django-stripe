@@ -50,6 +50,9 @@ jobs:
     - name: start stripe mock service
       run: make docker-start SERVICES=stripe-mock
 
+    - name: waiting for the services
+      run: make docker-wait SERVICES=stripe-mock
+
     - name: install deps
       run: poetry install
 

@@ -44,6 +44,15 @@ services:
 
   stripe-mock:
     image: stripe/stripe-mock:latest
-    container_name: stripe-mock
     ports:
       - 12111-12112:12111-12112
+    healthcheck:
+      test: [
+        "CMD", "wget", "--quiet", "--spider",
+        "http://localhost:12111/v1/charges",
+        "--header", "Authorization: Bearer sk_test_123"
+      ]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 40s  # requires docker-compose 3.4
