@@ -47,6 +47,9 @@ jobs:
         use-mamba: true
         miniforge-variant: Mambaforge
 
+    - name: start stripe mock service
+      run: make docker-start SERVICES=stripe-mock
+
     - name: install deps
       run: poetry install
 
@@ -55,6 +58,9 @@ jobs:
 
     - name: tests
       run: make run-tests
+
+    - name: stop stripe mock service
+      run: make docker-stop SERVICES=stripe-mock
 
     - name: lint
       run: |
