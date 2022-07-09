@@ -1,5 +1,7 @@
 DOCKER=docker-compose --env-file .env --file docker/docker-compose.yaml
 DEV_USER:=admin
+CONSOLE:=bash
+
 
 .PHONY: migrate
 migrate:
@@ -67,6 +69,15 @@ docker-logs:
 .PHONY: docker-wait
 docker-wait:
 	echo ${SERVICES} | xargs -t -n1 ./docker/healthcheck.sh
+
+.PHONY: docker-exec
+docker-exec:
+	$(DOCKER) exec -T ${SERVICE} ${CMD}
+
+.PHONY: docker-console
+docker-console:
+	$(DOCKER) exec ${SERVICE} ${CONSOLE}
+
 
 .PHONY:docker-dev-prepare-db
 docker-dev-prepare-db:
